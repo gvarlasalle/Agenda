@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Personal</title>
+    <style>
+       
+        /* Estilos para el título */
+#titulo_web {
+    text-align: center;
+    color: #333;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+/* Estilos para la tabla */
+#tablaEventos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#tablaEventos th,
+#tablaEventos td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#tablaEventos th {
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+}
+
+#tablaEventos tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Estilos para los botones dentro de la tabla */
+#tablaEventos button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+#tablaEventos button:hover {
+    background-color: #0056b3;
+}
+
+        /* Estilos generales */
+        body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        }
+
+        #titulo_web{
+        justify-content:center;
+        }
+     
+        /* Estilos para el contenedor del formulario */
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /*min-height: 100vh;*/ /* Asegura que el contenedor ocupe toda la altura de la ventana gráfica */
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+       
+        /* Estilos para el formulario */
+        #crearEventoForm {
+            width: 50%; /* Ajusta este valor para controlar el ancho del formulario */
+            padding: 20px;
+            margin: 5px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+       
+        /* Estilos para los elementos del formulario */
+        #crearEventoForm label {
+            display: block;
+            margin-bottom: 5px;
+            margin:5px;
+        }
+       
+        #crearEventoForm textarea,
+        #crearEventoForm input[type="date"],
+        #crearEventoForm input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+       
+        #crearEventoForm button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+       
+        #crearEventoForm button:hover {
+            background-color: #0056b3;
+        }
+       
+        /* Media Queries para adaptar el diseño a diferentes tamaños de pantalla */
+        @media (max-width: 768px) {
+            #crearEventoForm {
+                width: 80%; /* Ajusta el ancho del formulario en pantallas más pequeñas */
+            }
+        }
+       
+        @media (max-width: 480px) {
+            #crearEventoForm {
+                width: 90%; /* Ajusta el ancho del formulario en pantallas muy pequeñas */
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <h1 id="titulo_web">Agenda Personal</h1>
+
+    <div class="form-container">
+    <form id="crearEventoForm">
+        <label for="titulo">Título y descripción del Evento:</label>
+        <textarea id="titulo" name="titulo" required></textarea>
+        <br>
+        <label for="fecha">Fecha del Evento:</label>
+        <input type="date" id="fecha" name="fecha" required>
+        <br>
+        <label for="hora">Hora del Evento:</label>
+        <input type="time" id="hora" name="hora" required>
+        <br>
+        <button type="submit">Crear Evento</button>
+    </form>
+    </div>
+
+    <table id="tablaEventos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Título</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Los eventos se agregarán aquí dinámicamente -->
+        </tbody>
+    </table>
+ 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        cargarEventos();
+
+        document.getElementById('crearEventoForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const titulo = document.getElementById('titulo').value;
+            const fecha = document.getElementById('fecha').value;
+            const hora = document.getElementById('hora').value;
+
+            // Procesar el título para incluir saltos de línea como <br />
+            const tituloProcesado = titulo.replace(/\r?\n/g, ' <br /> ');
+
+            fetch('/crearEvento', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ titulo: tituloProcesado, fecha, hora }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                cargarEventos();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    });
+        function cargarEventos() {
+            fetch('/eventos')
+            .then(response => response.json())
+            .then(eventos => {
+                const tbody = document.getElementById('tablaEventos').querySelector('tbody');
+                tbody.innerHTML = '';
+
+                eventos.forEach(evento => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${evento.fecha}</td>
+                        <td>${evento.hora}</td>
+                        <td>${evento.titulo}</td>
+                        <td>
+                            <button onclick="verEvento('${evento.titulo}', '${evento.descripcion}', '${evento.fecha}', '${evento.hora}')">Ver</button>
+                            <button onclick="editarEvento('${evento.fecha}', '${evento.hora}')">Editar</button>
+                            <button onclick="eliminarEvento('${evento.fecha}', '${evento.hora}')">Eliminar</button>                          
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function editarEvento(fecha, hora) {
+        const nuevoTitulo = prompt("Ingrese el nuevo título:");
+        const nuevaDescripcion = prompt("Ingrese la nueva descripción:");
+
+        // Verificar si el usuario canceló la edición
+        if (nuevoTitulo === null || nuevaDescripcion === null) {
+            return;
+        }
+
+        fetch('/editarEvento', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fecha, hora, nuevoTitulo, nuevaDescripcion }),
+        })
+        .then(response => {
+            console.log('Status de la respuesta:', response.status);
+            if (!response.ok) {
+                throw new Error('Error al editar el evento');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Respuesta del servidor:', data);
+            alert(data.message);
+            cargarEventos(); // Recargar la lista de eventos
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+        function eliminarEvento(fecha, hora) {
+        fetch('/eliminarEvento', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fecha, hora }),
+        })
+        .then(response => {
+            console.log('Status de la respuesta:', response.status);
+            if (!response.ok) {
+                throw new Error('Error al eliminar el evento');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Respuesta del servidor:', data);
+            alert(data.message);
+            cargarEventos(); // Recargar la lista de eventos
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+        }
+
+        function verEvento(titulo, descripcion, fecha, hora) {
+          alert(`Ver evento:\n Titulo: ${titulo} \n Descripción: ${descripcion} \n Fecha: ${fecha} \n Hora: ${hora}`);
+        }
+    </script>
+</body>
+</html>
